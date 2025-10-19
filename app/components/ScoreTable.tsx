@@ -1,6 +1,6 @@
 export default function ScoreTable({ players }: any) {
   return (
-    <table className="min-w-full border mt-4">
+    <table className="w-1/2 mx-auto border mt-4 text-center">
       <thead>
         <tr>
           <th>Speler</th>

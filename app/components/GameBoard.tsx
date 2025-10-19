@@ -181,155 +181,155 @@ const trickOptions =
             </tr>
           </thead>
           <tbody>
-{gameState.rounds.map((r: any, idx: number) => {
-  const bidderName = gameState.players[r.bidder]?.name ?? "";
-  const partnerNames = (r.duoPartners ?? [])
-    .map((i: number) => gameState.players[i]?.name ?? "")
-    .filter(Boolean);
-
-  // Combine bidder + partners for display
-  const playersInRound = partnerNames.length
-    ? [bidderName, ...partnerNames].join(" & ")
-    : bidderName;
-
-  return (
-    <tr key={idx}>
-      {gameState.players.map((p: Player, i: number) => (
-        <td key={p.id} className="px-2 py-1 border text-center">
-          {r.changes?.[i] ?? 0}
-        </td>
-      ))}
-      <td className="border px-2 py-1">{r.bid}</td>
-      <td className="border px-2 py-1">{r.tricksMade ?? "-"}</td>
-      <td className="border px-2 py-1">{playersInRound}</td>
-      <td className="border px-2 py-1 text-center">
-        {r.success ? "✔" : "✖"}
+  {/* Editable row always on top */}
+  <tr className="bg-yellow-200 text-gray-700">
+    {gameState.players.map((p: Player) => (
+      <td key={p.id} className="px-2 py-1 border text-center">
+        <input
+          type="radio"
+          name="bidder"
+          checked={bidder === p.id}
+          onChange={() => setBidder(p.id)}
+        />
+        <div>
+          {p.id === bidder
+            ? "🏆"
+            : duoPartners.includes(p.id)
+            ? "🤝"
+            : ""}
+        </div>
       </td>
-    </tr>
-  );
-})}
+    ))}
 
+    <td>
+      <select
+        value={bid}
+        onChange={(e) => setBid(e.target.value)}
+        className="border rounded px-2 py-1"
+      >
+        <option value="">Selecteer bieding</option>
+        {bids.map((b) => (
+          <option key={b}>{b}</option>
+        ))}
+      </select>
+    </td>
 
-            {/* Editable row */}
-            <tr className="bg-yellow-200 text-gray-700">
-              {gameState.players.map((p: Player) => (
-                <td key={p.id} className="px-2 py-1 border text-center">
-                  <input
-                    type="radio"
-                    name="bidder"
-                    checked={bidder === p.id}
-                    onChange={() => setBidder(p.id)}
-                  />
-                  <div>
-                    {p.id === bidder
-                      ? "🏆"
-                      : duoPartners.includes(p.id)
-                      ? "🤝"
-                      : ""}
-                  </div>
-                </td>
-              ))}
+    {/* Tricks column */}
+    <td>
+      <select
+        value={tricksMade}
+        onChange={(e) => setTricksMade(e.target.value)}
+        disabled={!isTrickSelectable}
+        className={`border rounded px-2 py-1 ${
+          !isTrickSelectable ? "bg-gray-200 text-gray-500" : ""
+        }`}
+      >
+        {!isTrickSelectable && <option>-</option>}
+        {isTrickSelectable &&
+          trickOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+      </select>
+    </td>
 
-              <td>
-                <select
-                  value={bid}
-                  onChange={(e) => setBid(e.target.value)}
-                  className="border rounded px-2 py-1"
-                >
-                  <option value="">Selecteer bieding</option>
-                  {bids.map((b) => (
-                    <option key={b}>{b}</option>
-                  ))}
-                </select>
-              </td>
+    {/* Duo partners */}
+    <td>
+      {gameState.players
+        .filter((p: Player) => p.active)
+        .map((player: Player) => {
+          if (player.id === bidder) return null;
 
-              {/* Tricks column */}
-              <td>
-                <select
-                  value={tricksMade}
-                  onChange={(e) => setTricksMade(e.target.value)}
-                  disabled={!isTrickSelectable}
-                  className={`border rounded px-2 py-1 ${
-                    !isTrickSelectable ? "bg-gray-200 text-gray-500" : ""
-                  }`}
-                >
-                  {!isTrickSelectable && <option>-</option>}
-                  {isTrickSelectable &&
-                    trickOptions.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                </select>
-              </td>
+          const isSoloBid = [
+            "Kaartje vragen",
+            "Misère",
+            "Open Misère",
+            "13 alleen",
+            "9 alleen",
+            "Trek (alleen 5)"
+          ].includes(bid);
 
-              <td>
- <td>
-  {gameState.players
-    .filter((p: Player) => p.active)
-    .map((player: Player) => {
-      if (player.id === bidder) return null;
+          return (
+            <label
+              key={player.id}
+              className={`mr-2 ${
+                isSoloBid ? "opacity-40 cursor-not-allowed" : ""
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={duoPartners.includes(player.id)}
+                onChange={() => handlePartnerToggle(player.id)}
+                disabled={isSoloBid}
+              />
+              {player.name}
+            </label>
+          );
+        })}
+    </td>
 
-      const isSoloBid = [
-        "Kaartje vragen",
-        "Misère",
-        "Open Misère",
-        "13 alleen",
-        "9 alleen",
-        "Trek (alleen 5)"
-      ].includes(bid);
+    {/* Success checkbox */}
+    <td className="text-center">
+      <input
+        type="checkbox"
+        checked={success}
+        onChange={(e) => setSuccess(e.target.checked)}
+        disabled={
+          ![
+            "Kaartje vragen",
+            "Misère",
+            "Open Misère",
+            "13 alleen",
+            "9 alleen",
+          ].includes(bid)
+        }
+        className={`w-5 h-5 ${
+          ![
+            "Kaartje vragen",
+            "Misère",
+            "Open Misère",
+            "13 alleen",
+            "9 alleen",
+          ].includes(bid)
+            ? "opacity-40 cursor-not-allowed"
+            : ""
+        }`}
+      />
+    </td>
+  </tr>
+
+  {/* List rounds — newest first */}
+  {[...gameState.rounds]
+    .slice()
+    .reverse()
+    .map((r: any, idx: number) => {
+      const bidderName = gameState.players[r.bidder]?.name ?? "";
+      const partnerNames = (r.duoPartners ?? [])
+        .map((i: number) => gameState.players[i]?.name ?? "")
+        .filter(Boolean);
+
+      const playersInRound = partnerNames.length
+        ? [bidderName, ...partnerNames].join(" & ")
+        : bidderName;
 
       return (
-        <label
-          key={player.id}
-          className={`mr-2 ${
-            isSoloBid ? "opacity-40 cursor-not-allowed" : ""
-          }`}
-        >
-          <input
-            type="checkbox"
-            checked={duoPartners.includes(player.id)}
-            onChange={() => handlePartnerToggle(player.id)}
-            disabled={isSoloBid}
-          />
-          {player.name}
-        </label>
+        <tr key={idx}>
+          {gameState.players.map((p: Player) => (
+            <td key={p.id} className="px-2 py-1 border text-center">
+              {r.changes?.[p.id] ?? 0}
+            </td>
+          ))}
+          <td className="border px-2 py-1">{r.bid}</td>
+          <td className="border px-2 py-1">{r.tricksMade ?? "-"}</td>
+          <td className="border px-2 py-1">{playersInRound}</td>
+          <td className="border px-2 py-1 text-center">
+            {r.success ? "✔" : "✖"}
+          </td>
+        </tr>
       );
     })}
-</td>
-
-              </td>
-
-<td className="text-center">
-  <input
-    type="checkbox"
-    checked={success}
-    onChange={(e) => setSuccess(e.target.checked)}
-    disabled={
-      ![
-        "Kaartje vragen",
-        "Misère",
-        "Open Misère",
-        "13 alleen",
-        "9 alleen",
-      ].includes(bid)
-    }
-    className={`w-5 h-5 ${
-      ![
-        "Kaartje vragen",
-        "Misère",
-        "Open Misère",
-        "13 alleen",
-        "9 alleen",
-      ].includes(bid)
-        ? "opacity-40 cursor-not-allowed"
-        : ""
-    }`}
-  />
-</td>
-
-            </tr>
-          </tbody>
+</tbody>
         </table>
 
         <button
