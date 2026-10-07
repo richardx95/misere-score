@@ -19,7 +19,7 @@ interface RoundHistoryProps {
   onUndoLastRound: () => void;
 }
 
-// Distinct, accessible colors for player lines in the graph
+// Distinct accessible colors for player lines in the graph
 const PLAYER_COLORS = [
   "#16a34a", // Emerald Green
   "#2563eb", // Royal Blue
@@ -79,14 +79,14 @@ export default function RoundHistory({
   };
 
   return (
-    <div className="rikken-card p-3 sm:p-4 mb-4 border-2 border-neutral-900 shadow-sm">
-      {/* Header with View Toggle */}
-      <div className="flex items-center justify-between pb-2 mb-3 border-b border-neutral-200">
+    <div className="rikken-card p-3 border-2 border-neutral-900 shadow-sm flex flex-col flex-1 min-h-0 bg-white">
+      {/* Header with View Toggle (List vs Graph icon) */}
+      <div className="shrink-0 flex items-center justify-between pb-2 mb-2 border-b border-neutral-200">
         <h2 className="text-xs font-black tracking-wider text-neutral-900 uppercase">
-          Rondes & Geschiedenis ({rounds.length})
+          Laatste Rondes ({rounds.length})
         </h2>
 
-        {/* List / Graph Toggle */}
+        {/* Graph / List Icon Toggle */}
         <div className="flex items-center p-0.5 bg-neutral-100 border border-neutral-300 rounded-md">
           <button
             type="button"
@@ -96,9 +96,10 @@ export default function RoundHistory({
                 ? "bg-neutral-900 text-white shadow-2xs"
                 : "text-neutral-700 hover:text-neutral-900"
             }`}
+            title="Toon lijst van rondes"
           >
             <ListFilter className="w-3.5 h-3.5" />
-            <span>Lijst</span>
+            <span className="hidden xs:inline">Lijst</span>
           </button>
           <button
             type="button"
@@ -108,6 +109,7 @@ export default function RoundHistory({
                 ? "bg-neutral-900 text-white shadow-2xs"
                 : "text-neutral-700 hover:text-neutral-900"
             }`}
+            title="Toon scoreverloop grafiek"
           >
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Grafiek</span>
@@ -115,109 +117,109 @@ export default function RoundHistory({
         </div>
       </div>
 
-      {/* Empty State */}
-      {rounds.length === 0 ? (
-        <div className="text-center py-6 px-4 text-neutral-500 bg-neutral-50 rounded-md border border-neutral-200">
-          <p className="text-xs font-semibold">Nog geen rondes gespeeld.</p>
-          <p className="text-[11px] mt-1 text-neutral-400">
-            Voer hierboven de eerste ronde in en klik op &ldquo;Ronde Toevoegen&rdquo;.
-          </p>
-        </div>
-      ) : viewMode === "graph" ? (
-        /* SCORING GRAPH VIEW */
-        <div className="space-y-3">
-          {/* Custom Player Legend */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 p-2 bg-neutral-50 rounded-md border border-neutral-200 text-xs font-semibold">
-            {players.map((p, idx) => (
-              <div key={p.id} className="flex items-center gap-1.5">
-                <span
-                  className="w-3 h-3 rounded-full border border-black/20"
-                  style={{ backgroundColor: PLAYER_COLORS[idx % PLAYER_COLORS.length] }}
-                />
-                <span className="text-neutral-800">{p.name}:</span>
-                <span className="font-mono font-bold">
-                  {p.score > 0 ? `+${p.score}` : p.score}
-                </span>
-              </div>
-            ))}
+      {/* Body: Scrollable Content Area */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-0.5">
+        {rounds.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center py-6 px-4 text-center text-neutral-500 bg-neutral-50 rounded-md border border-neutral-200">
+            <p className="text-xs font-semibold">Nog geen rondes gespeeld.</p>
+            <p className="text-[11px] mt-1 text-neutral-400">
+              Tik op &ldquo;+ Nieuwe Ronde Invoeren&rdquo; om de eerste ronde te starten.
+            </p>
           </div>
-
-          {/* Recharts Container */}
-          <div className="w-full h-64 sm:h-72 bg-white rounded-md border border-neutral-200 p-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={graphData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis
-                  dataKey="round"
-                  tick={{ fontSize: 11, fill: "#4b5563" }}
-                  tickFormatter={(val) => `R${val}`}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "#4b5563" }}
-                  domain={["auto", "auto"]}
-                />
-                <ReferenceLine y={0} stroke="#9ca3af" strokeWidth={1.5} />
-                <Tooltip
-                  labelFormatter={(val) => `Na Ronde ${val}`}
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    borderColor: "#111111",
-                    borderRadius: "6px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                  }}
-                  formatter={(val: any, name: any) => [
-                    `${Number(val) > 0 ? "+" : ""}${val} pnt`,
-                    name,
-                  ]}
-                />
-                {players.map((p, idx) => (
-                  <Line
-                    key={p.id}
-                    type="monotone"
-                    dataKey={p.name}
-                    stroke={PLAYER_COLORS[idx % PLAYER_COLORS.length]}
-                    strokeWidth={2.5}
-                    dot={{ r: 3, strokeWidth: 1.5, fill: "#ffffff" }}
-                    activeDot={{ r: 5 }}
+        ) : viewMode === "graph" ? (
+          /* SCORING GRAPH VIEW */
+          <div className="space-y-2 h-full flex flex-col">
+            {/* Player Legend */}
+            <div className="shrink-0 flex flex-wrap items-center justify-center gap-2 p-1.5 bg-neutral-50 rounded-md border border-neutral-200 text-xs font-semibold">
+              {players.map((p, idx) => (
+                <div key={p.id} className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full border border-black/20"
+                    style={{ backgroundColor: PLAYER_COLORS[idx % PLAYER_COLORS.length] }}
                   />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      ) : (
-        /* ROUNDS LIST VIEW */
-        <div className="space-y-2">
-          {/* Undo Confirmation Bar */}
-          {confirmUndo && (
-            <div className="p-2.5 bg-red-50 border-2 border-red-500 rounded-md flex items-center justify-between text-xs text-red-900 animate-fadeIn">
-              <div className="flex items-center gap-1.5 font-bold">
-                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>Laatste ronde (Ronde {rounds.length}) verwijderen?</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={handleUndo}
-                  className="px-2 py-1 bg-red-600 text-white font-bold rounded hover:bg-red-700 active:bg-red-800 text-xs"
-                >
-                  Ja, wis
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmUndo(false)}
-                  className="px-2 py-1 bg-white border border-neutral-300 font-semibold rounded hover:bg-neutral-100 text-xs"
-                >
-                  Nee
-                </button>
-              </div>
+                  <span className="text-neutral-800 text-[11px]">{p.name}:</span>
+                  <span className="font-mono text-[11px] font-bold">
+                    {p.score > 0 ? `+${p.score}` : p.score}
+                  </span>
+                </div>
+              ))}
             </div>
-          )}
 
-          {/* List of Rounds - Newest First */}
-          <div className="space-y-2 max-h-96 overflow-y-auto pr-0.5">
+            {/* Recharts Container */}
+            <div className="flex-1 min-h-[220px] bg-white rounded-md border border-neutral-200 p-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={graphData} margin={{ top: 8, right: 12, left: -22, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="round"
+                    tick={{ fontSize: 10, fill: "#4b5563" }}
+                    tickFormatter={(val) => `R${val}`}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "#4b5563" }}
+                    domain={["auto", "auto"]}
+                  />
+                  <ReferenceLine y={0} stroke="#9ca3af" strokeWidth={1.5} />
+                  <Tooltip
+                    labelFormatter={(val) => `Na Ronde ${val}`}
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      borderColor: "#111111",
+                      borderRadius: "6px",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                    }}
+                    formatter={(val: any, name: any) => [
+                      `${Number(val) > 0 ? "+" : ""}${val} pnt`,
+                      name,
+                    ]}
+                  />
+                  {players.map((p, idx) => (
+                    <Line
+                      key={p.id}
+                      type="monotone"
+                      dataKey={p.name}
+                      stroke={PLAYER_COLORS[idx % PLAYER_COLORS.length]}
+                      strokeWidth={2.5}
+                      dot={{ r: 3, strokeWidth: 1.5, fill: "#ffffff" }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        ) : (
+          /* ROUNDS LIST VIEW */
+          <div className="space-y-2">
+            {/* Undo Confirmation Bar */}
+            {confirmUndo && (
+              <div className="p-2 bg-red-50 border-2 border-red-500 rounded-md flex items-center justify-between text-xs text-red-900 animate-fadeIn">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>Ronde {rounds.length} wissen?</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    className="px-2 py-0.5 bg-red-600 text-white font-bold rounded hover:bg-red-700 active:bg-red-800 text-[11px]"
+                  >
+                    Ja, wis
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmUndo(false)}
+                    className="px-2 py-0.5 bg-white border border-neutral-300 font-semibold rounded hover:bg-neutral-100 text-[11px]"
+                  >
+                    Nee
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* List of Rounds - Newest First */}
             {[...rounds].reverse().map((r, rIdx) => {
               const isLatest = rIdx === 0;
 
@@ -225,15 +227,13 @@ export default function RoundHistory({
                 <div
                   key={r.id}
                   className={`p-2.5 bg-white rounded-md border-2 transition-all ${
-                    isLatest
-                      ? "border-neutral-900 shadow-xs"
-                      : "border-neutral-200"
+                    isLatest ? "border-neutral-900 shadow-2xs" : "border-neutral-200"
                   }`}
                 >
                   {/* Top Line: Round #, Bid, Result */}
-                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <div className="flex items-center justify-between gap-1 mb-1">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-neutral-900 text-white rounded">
+                      <span className="px-1.5 py-0.2 text-[10px] font-bold bg-neutral-900 text-white rounded">
                         R{r.roundNumber}
                       </span>
                       <span className="text-xs font-black text-neutral-900 truncate">
@@ -243,7 +243,7 @@ export default function RoundHistory({
 
                     <div className="flex items-center gap-1 shrink-0">
                       <span
-                        className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase ${
+                        className={`text-[9px] font-black px-1.5 py-0.2 rounded uppercase ${
                           r.success
                             ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                             : "bg-red-100 text-red-800 border border-red-300"
@@ -252,13 +252,13 @@ export default function RoundHistory({
                         {r.success ? "WIN" : "VERLIES"}
                       </span>
 
-                      {/* Undo button for the latest round */}
+                      {/* Undo button for latest round */}
                       {isLatest && !confirmUndo && (
                         <button
                           type="button"
                           onClick={() => setConfirmUndo(true)}
-                          className="p-1 text-neutral-400 hover:text-red-600 active:text-red-700 rounded transition-colors ml-1"
-                          title="Wis deze laatste ronde"
+                          className="p-1 text-neutral-400 hover:text-red-600 active:text-red-700 rounded transition-colors ml-0.5"
+                          title="Herstel deze laatste ronde"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                         </button>
@@ -266,15 +266,15 @@ export default function RoundHistory({
                     </div>
                   </div>
 
-                  {/* Summary & Details */}
+                  {/* Summary */}
                   {r.summary && (
-                    <div className="text-[11px] text-neutral-600 mb-1.5 font-medium truncate">
+                    <div className="text-[10px] text-neutral-600 mb-1 font-medium truncate">
                       {r.summary}
                     </div>
                   )}
 
                   {/* Score Deltas for all players */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[11px] font-mono pt-1.5 border-t border-neutral-100">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[11px] font-mono pt-1 border-t border-neutral-100">
                     {players.map((p) => {
                       const change = r.changes[p.id] ?? 0;
                       const isPos = change > 0;
@@ -307,8 +307,8 @@ export default function RoundHistory({
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

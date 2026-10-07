@@ -4,89 +4,33 @@ import { GameState, Player, Round, PlayerScoreChange } from "../lib/types";
 import { saveGame, saveToHistory } from "../lib/storage";
 import ScoreHeader from "./ScoreHeader";
 import ScoreBoard from "./ScoreBoard";
-import RoundEntry from "./RoundEntry";
 import RoundHistory from "./RoundHistory";
 import RulesModal from "./RulesModal";
 import EditPlayersModal from "./EditPlayersModal";
 import ConfirmModal from "./ConfirmModal";
+import { PlusCircle } from "lucide-react";
 
 interface GameBoardProps {
   gameState: GameState;
   setGameState: React.Dispatch<React.SetStateAction<GameState | null>>;
   onStartNewGame: () => void;
+  onOpenRoundSelection: () => void;
+  onOpenEditPlayers: () => void;
 }
 
 export default function GameBoard({
   gameState,
   setGameState,
   onStartNewGame,
+  onOpenRoundSelection,
+  onOpenEditPlayers,
 }: GameBoardProps) {
   const [isRulesOpen, setIsRulesOpen] = useState(false);
-  const [isEditPlayersOpen, setIsEditPlayersOpen] = useState(false);
   const [isConfirmNewGameOpen, setIsConfirmNewGameOpen] = useState(false);
 
-  const { players, dealerIndex, currentRound, rounds, ruleset } = gameState;
+  const { players, dealerIndex, currentRound, rounds } = gameState;
   const currentDealer = players[dealerIndex]?.name || "Onbekend";
   const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
-
-  // Add a round to the game
-  const handleAddRound = (roundData: {
-    bid: string;
-    bidderId: number;
-    partnerIds: number[];
-    tricksMade?: number | string;
-    success: boolean;
-    changes: number[];
-    summary: string;
-  }) => {
-    // 1. Calculate new scores for each player
-    const scoreChanges: PlayerScoreChange[] = players.map((p, i) => {
-      const change = roundData.changes[i] || 0;
-      return {
-        playerId: p.id,
-        oldScore: p.score,
-        newScore: p.score + change,
-        change,
-      };
-    });
-
-    const updatedPlayers: Player[] = players.map((p, i) => ({
-      ...p,
-      score: p.score + (roundData.changes[i] || 0),
-    }));
-
-    // 2. Next dealer rotates clockwise
-    const nextDealerIndex = (dealerIndex + 1) % players.length;
-
-    // 3. New round object
-    const newRound: Round = {
-      id: Date.now(),
-      roundNumber: currentRound,
-      dealerIndex,
-      bid: roundData.bid,
-      bidderId: roundData.bidderId,
-      partnerIds: roundData.partnerIds,
-      tricksMade: roundData.tricksMade,
-      success: roundData.success,
-      scoreChanges,
-      changes: roundData.changes,
-      summary: roundData.summary,
-      timestamp: Date.now(),
-    };
-
-    // 4. Update Game State
-    const updatedState: GameState = {
-      ...gameState,
-      players: updatedPlayers,
-      dealerIndex: nextDealerIndex,
-      currentRound: currentRound + 1,
-      rounds: [...rounds, newRound],
-    };
-
-    setGameState(updatedState);
-    saveGame(updatedState);
-    saveToHistory(updatedState);
-  };
 
   // Undo / Delete the latest round
   const handleUndoLastRound = () => {
@@ -120,50 +64,42 @@ export default function GameBoard({
     saveGame(revertedState);
   };
 
-  // Update player names
-  const handleSavePlayerNames = (updatedNames: string[]) => {
-    const updatedPlayers = players.map((p, i) => ({
-      ...p,
-      name: updatedNames[i] || p.name,
-    }));
-
-    const updatedState: GameState = {
-      ...gameState,
-      players: updatedPlayers,
-    };
-
-    setGameState(updatedState);
-    saveGame(updatedState);
-  };
-
   return (
-    <div className="max-w-xl mx-auto px-2 sm:px-4 py-3 relative z-10">
-      {/* Top Header with title, card suits, round badge, and actions */}
-      <ScoreHeader
-        currentRound={currentRound}
-        dealerName={currentDealer}
-        onOpenRules={() => setIsRulesOpen(true)}
-        onNewGame={() => setIsConfirmNewGameOpen(true)}
-        onEditPlayers={() => setIsEditPlayersOpen(true)}
-      />
+    <div className="flex flex-col h-[100dvh] max-w-md mx-auto bg-[#f8f9fa] border-x border-neutral-300 shadow-xl overflow-hidden p-2.5 sm:p-3">
+      {/* 1. Header (fixed) */}
+      <div className="shrink-0">
+        <ScoreHeader
+          currentRound={currentRound}
+          dealerName={currentDealer}
+          onOpenRules={() => setIsRulesOpen(true)}
+          onNewGame={() => setIsConfirmNewGameOpen(true)}
+          onEditPlayers={onOpenEditPlayers}
+        />
+      </div>
 
-      {/* 1. CURRENT SCORE ON TOP */}
-      <ScoreBoard
-        players={players}
-        dealerIndex={dealerIndex}
-        lastRoundChanges={lastRound?.changes}
-      />
+      {/* 2. Top: Players with their current score (fixed) */}
+      <div className="shrink-0 mb-2">
+        <ScoreBoard
+          players={players}
+          dealerIndex={dealerIndex}
+          lastRoundChanges={lastRound?.changes}
+        />
+      </div>
 
-      {/* 2. FOLLOWED BY ROUND SELECTION */}
-      <RoundEntry
-        players={players}
-        dealerIndex={dealerIndex}
-        currentRound={currentRound}
-        ruleset={ruleset}
-        onAddRound={handleAddRound}
-      />
+      {/* 3. Underneath: Button to start a new round (fixed) */}
+      <div className="shrink-0 mb-2.5">
+        <button
+          type="button"
+          onClick={onOpenRoundSelection}
+          className="w-full py-3 px-4 rounded-lg text-xs sm:text-sm font-black uppercase tracking-wider text-white bg-neutral-900 border-2 border-neutral-900 hover:bg-neutral-800 active:bg-black active:translate-y-0.5 shadow-sm transition-all flex items-center justify-center gap-2"
+        >
+          <PlusCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>Nieuwe Ronde Invoeren (Ronde {currentRound})</span>
+          <span className="text-base font-normal">➔</span>
+        </button>
+      </div>
 
-      {/* 3. LAST ROUNDS BELOW ROUND SELECTION + SCORING GRAPH */}
+      {/* 4. On the bottom: Scrollview with latest rounds & graph icon */}
       <RoundHistory
         players={players}
         rounds={rounds}
@@ -174,13 +110,6 @@ export default function GameBoard({
       <RulesModal
         isOpen={isRulesOpen}
         onClose={() => setIsRulesOpen(false)}
-      />
-
-      <EditPlayersModal
-        isOpen={isEditPlayersOpen}
-        players={players}
-        onClose={() => setIsEditPlayersOpen(false)}
-        onSave={handleSavePlayerNames}
       />
 
       <ConfirmModal
