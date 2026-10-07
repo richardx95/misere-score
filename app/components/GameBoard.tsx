@@ -1,344 +1,200 @@
 "use client";
 import React, { useState } from "react";
-import DealerIndicator from "./DealerIndicator";
-import ScoreTable from "./ScoreTable";
-import { calculateRoundScores } from "../lib/scoring";
-import { saveGame } from "../lib/storage";
-import { useEffect } from "react";
+import { GameState, Player, Round, PlayerScoreChange } from "../lib/types";
+import { saveGame, saveToHistory } from "../lib/storage";
+import ScoreHeader from "./ScoreHeader";
+import ScoreBoard from "./ScoreBoard";
+import RoundEntry from "./RoundEntry";
+import RoundHistory from "./RoundHistory";
+import RulesModal from "./RulesModal";
+import EditPlayersModal from "./EditPlayersModal";
+import ConfirmModal from "./ConfirmModal";
 
+interface GameBoardProps {
+  gameState: GameState;
+  setGameState: React.Dispatch<React.SetStateAction<GameState | null>>;
+  onStartNewGame: () => void;
+}
 
-type Player = {
-  id: number;
-  name: string;
-  score: number;
-  active: boolean;
-};
+export default function GameBoard({
+  gameState,
+  setGameState,
+  onStartNewGame,
+}: GameBoardProps) {
+  const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isEditPlayersOpen, setIsEditPlayersOpen] = useState(false);
+  const [isConfirmNewGameOpen, setIsConfirmNewGameOpen] = useState(false);
 
-type GameBoardProps = {
-  gameState: any;
-  setGameState: (state: any) => void;
-};
+  const { players, dealerIndex, currentRound, rounds, ruleset } = gameState;
+  const currentDealer = players[dealerIndex]?.name || "Onbekend";
+  const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
 
-export default function GameBoard({ gameState, setGameState }: GameBoardProps) {
-  const [bidder, setBidder] = useState<number | null>(null);
-  const [bid, setBid] = useState("");
-  const [duoPartners, setDuoPartners] = useState<number[]>([]);
-  const [success, setSuccess] = useState(true);
-  const [tricksMade, setTricksMade] = useState<number | string>(0);
-  const [allCards, setAllCards] = useState(false);
-  const [penaltyPlayers, setPenaltyPlayers] = useState<number[]>([]);
+  // Add a round to the game
+  const handleAddRound = (roundData: {
+    bid: string;
+    bidderId: number;
+    partnerIds: number[];
+    tricksMade?: number | string;
+    success: boolean;
+    changes: number[];
+    summary: string;
+  }) => {
+    // 1. Calculate new scores for each player
+    const scoreChanges: PlayerScoreChange[] = players.map((p, i) => {
+      const change = roundData.changes[i] || 0;
+      return {
+        playerId: p.id,
+        oldScore: p.score,
+        newScore: p.score + change,
+        change,
+      };
+    });
 
-  const togglePenaltyPlayer = (id: number) => {
-    setPenaltyPlayers((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  useEffect(() => {
-  if (bid === "Troela" || bid === "Troelalier") {
-    // Set default to "8+" if the user just selected this bid
-    setTricksMade("10+");
-  } else if (bid === "Trek /met" || bid === "Trek (alleen 5)") {
-    // Set numeric default for these bids
-    setTricksMade(0);
-  } else {
-    // For other bids, clear tricks
-    setTricksMade(0);
-  }
-}, [bid]);
-
-useEffect(() => {
-  if (bid === "Troela" || bid === "Troelalier") {
-    // Map tricksMade to numeric value for success evaluation
-    let tricks = 0;
-    if (tricksMade === "10+") tricks = 10;
-    else if (tricksMade === "10-") tricks = 9;
-    else if (tricksMade === "kapot gespeeld") tricks = 13; // treat as max success
-    else tricks = Number(tricksMade) || 0;
-
-    setSuccess(tricks >= 10); // 10+ or kapot gespeeld = win
-  } else if (bid === "Trek /met") {
-    const tricks = Number(tricksMade) || 0;
-    setSuccess(tricks >= 8); // 8+ tricks = win
-  } else if (bid === "Trek (alleen 5)") {
-    const tricks = Number(tricksMade) || 0;
-    setSuccess(tricks >= 5); // 5+ tricks = win
-  }
-}, [bid, tricksMade]);
-
-
-  const bids = [
-    "Schoppen dame + laatste slag",
-    "Trek /met",
-    "Trek (alleen 5)",
-    "9 alleen",
-    "Troela",
-    "Troelalier",
-    "Kaartje vragen",
-    "Misère",
-    "Open Misère",
-    "13 alleen",
-  ];
-
-  const handlePartnerToggle = (id: number) => {
-    setDuoPartners((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  const handleSubmit = () => {
-    if (bidder === null || !bid) return alert("Kies speler en bieding");
-
-    const activePlayerIds = gameState.players
-      .filter((p: Player) => p.active)
-      .map((p: Player) => p.id);
-
-// Keep the original string for Troela / Troelalier, convert to number otherwise
-const tricksValue =
-  bid === "Troela" || bid === "Troelalier"
-    ? tricksMade // keep as string ("8+", "kapot gespeeld", "8-")
-    : Number(tricksMade);
-
-
-    const changes = calculateRoundScores(
-      bid,
-      success,
-      0, // bonus removed
-      gameState.players,
-      bidder,
-      duoPartners,
-      activePlayerIds,
-      tricksValue,
-      allCards,
-      penaltyPlayers
-    );
-
-    const updatedPlayers = gameState.players.map((p: Player, i: number) => ({
+    const updatedPlayers: Player[] = players.map((p, i) => ({
       ...p,
-      score: p.score + changes[i],
+      score: p.score + (roundData.changes[i] || 0),
     }));
 
-    const nextDealer = (gameState.dealerIndex + 1) % gameState.players.length;
+    // 2. Next dealer rotates clockwise
+    const nextDealerIndex = (dealerIndex + 1) % players.length;
 
-    const newState = {
-      ...gameState,
-      players: updatedPlayers,
-      dealerIndex: nextDealer,
-      currentRound: gameState.currentRound + 1,
-      rounds: [
-        ...gameState.rounds,
-        { bidder, bid, duoPartners, success, tricksMade, changes },
-      ],
+    // 3. New round object
+    const newRound: Round = {
+      id: Date.now(),
+      roundNumber: currentRound,
+      dealerIndex,
+      bid: roundData.bid,
+      bidderId: roundData.bidderId,
+      partnerIds: roundData.partnerIds,
+      tricksMade: roundData.tricksMade,
+      success: roundData.success,
+      scoreChanges,
+      changes: roundData.changes,
+      summary: roundData.summary,
+      timestamp: Date.now(),
     };
 
-    setGameState(newState);
-    saveGame(newState);
+    // 4. Update Game State
+    const updatedState: GameState = {
+      ...gameState,
+      players: updatedPlayers,
+      dealerIndex: nextDealerIndex,
+      currentRound: currentRound + 1,
+      rounds: [...rounds, newRound],
+    };
 
-    // reset form
-    setBidder(null);
-    setBid("");
-    setDuoPartners([]);
-    setTricksMade(0);
-    setAllCards(false);
-    setPenaltyPlayers([]);
+    setGameState(updatedState);
+    saveGame(updatedState);
+    saveToHistory(updatedState);
   };
 
-  const isTrickSelectable = [
-    "Trek /met",
-    "Trek (alleen 5)",
-    "Troela",
-    "Troelalier",
-  ].includes(bid);
+  // Undo / Delete the latest round
+  const handleUndoLastRound = () => {
+    if (rounds.length === 0) return;
 
-const trickOptions =
-  bid === "Troela" || bid === "Troelalier"
-    ? ["10+", "kapot gespeeld", "10-"]
-    : Array.from({ length: 14 }, (_, i) => i);
+    const roundToRevert = rounds[rounds.length - 1];
+    const previousRounds = rounds.slice(0, rounds.length - 1);
 
+    // Revert player scores
+    const revertedPlayers = players.map((p, i) => {
+      const change = roundToRevert.changes[i] || 0;
+      return {
+        ...p,
+        score: p.score - change,
+      };
+    });
+
+    // Revert dealer index
+    const previousDealerIndex =
+      (dealerIndex - 1 + players.length) % players.length;
+
+    const revertedState: GameState = {
+      ...gameState,
+      players: revertedPlayers,
+      dealerIndex: previousDealerIndex,
+      currentRound: Math.max(1, currentRound - 1),
+      rounds: previousRounds,
+    };
+
+    setGameState(revertedState);
+    saveGame(revertedState);
+  };
+
+  // Update player names
+  const handleSavePlayerNames = (updatedNames: string[]) => {
+    const updatedPlayers = players.map((p, i) => ({
+      ...p,
+      name: updatedNames[i] || p.name,
+    }));
+
+    const updatedState: GameState = {
+      ...gameState,
+      players: updatedPlayers,
+    };
+
+    setGameState(updatedState);
+    saveGame(updatedState);
+  };
 
   return (
-    <div className="space-y-4 border p-4 rounded">
-      <DealerIndicator
-        players={gameState.players}
-        dealerIndex={gameState.dealerIndex}
+    <div className="max-w-xl mx-auto px-2 sm:px-4 py-3 relative z-10">
+      {/* Top Header with title, card suits, round badge, and actions */}
+      <ScoreHeader
+        currentRound={currentRound}
+        dealerName={currentDealer}
+        onOpenRules={() => setIsRulesOpen(true)}
+        onNewGame={() => setIsConfirmNewGameOpen(true)}
+        onEditPlayers={() => setIsEditPlayersOpen(true)}
       />
 
-      <ScoreTable players={gameState.players} />
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full border text-white-900">
-          <thead className="bg-gray-100 text-gray-500">
-            <tr>
-              {gameState.players.map((p: Player) => (
-                <th key={p.id} className="px-2 py-1 border">
-                  {p.name}
-                </th>
-              ))}
-              <th>Bieding</th>
-              <th>Slagen</th>
-              <th>Duo</th>
-              <th>Succes</th>
-            </tr>
-          </thead>
-          <tbody>
-  {/* Editable row always on top */}
-  <tr className="bg-yellow-200 text-gray-700">
-    {gameState.players.map((p: Player) => (
-      <td key={p.id} className="px-2 py-1 border text-center">
-        <input
-          type="radio"
-          name="bidder"
-          checked={bidder === p.id}
-          onChange={() => setBidder(p.id)}
-        />
-        <div>
-          {p.id === bidder
-            ? "🏆"
-            : duoPartners.includes(p.id)
-            ? "🤝"
-            : ""}
-        </div>
-      </td>
-    ))}
-
-    <td>
-      <select
-        value={bid}
-        onChange={(e) => setBid(e.target.value)}
-        className="border rounded px-2 py-1"
-      >
-        <option value="">Selecteer bieding</option>
-        {bids.map((b) => (
-          <option key={b}>{b}</option>
-        ))}
-      </select>
-    </td>
-
-    {/* Tricks column */}
-    <td>
-      <select
-        value={tricksMade}
-        onChange={(e) => setTricksMade(e.target.value)}
-        disabled={!isTrickSelectable}
-        className={`border rounded px-2 py-1 ${
-          !isTrickSelectable ? "bg-gray-200 text-gray-500" : ""
-        }`}
-      >
-        {!isTrickSelectable && <option>-</option>}
-        {isTrickSelectable &&
-          trickOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-      </select>
-    </td>
-
-    {/* Duo partners */}
-    <td>
-      {gameState.players
-        .filter((p: Player) => p.active)
-        .map((player: Player) => {
-          if (player.id === bidder) return null;
-
-          const isSoloBid = [
-            "Kaartje vragen",
-            "Misère",
-            "Open Misère",
-            "13 alleen",
-            "9 alleen",
-            "Trek (alleen 5)"
-          ].includes(bid);
-
-          return (
-            <label
-              key={player.id}
-              className={`mr-2 ${
-                isSoloBid ? "opacity-40 cursor-not-allowed" : ""
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={duoPartners.includes(player.id)}
-                onChange={() => handlePartnerToggle(player.id)}
-                disabled={isSoloBid}
-              />
-              {player.name}
-            </label>
-          );
-        })}
-    </td>
-
-    {/* Success checkbox */}
-    <td className="text-center">
-      <input
-        type="checkbox"
-        checked={success}
-        onChange={(e) => setSuccess(e.target.checked)}
-        disabled={
-          ![
-            "Kaartje vragen",
-            "Misère",
-            "Open Misère",
-            "13 alleen",
-            "9 alleen",
-          ].includes(bid)
-        }
-        className={`w-5 h-5 ${
-          ![
-            "Kaartje vragen",
-            "Misère",
-            "Open Misère",
-            "13 alleen",
-            "9 alleen",
-          ].includes(bid)
-            ? "opacity-40 cursor-not-allowed"
-            : ""
-        }`}
+      {/* 1. CURRENT SCORE ON TOP */}
+      <ScoreBoard
+        players={players}
+        dealerIndex={dealerIndex}
+        lastRoundChanges={lastRound?.changes}
       />
-    </td>
-  </tr>
 
-  {/* List rounds — newest first */}
-  {[...gameState.rounds]
-    .slice()
-    .reverse()
-    .map((r: any, idx: number) => {
-      const bidderName = gameState.players[r.bidder]?.name ?? "";
-      const partnerNames = (r.duoPartners ?? [])
-        .map((i: number) => gameState.players[i]?.name ?? "")
-        .filter(Boolean);
+      {/* 2. FOLLOWED BY ROUND SELECTION */}
+      <RoundEntry
+        players={players}
+        dealerIndex={dealerIndex}
+        currentRound={currentRound}
+        ruleset={ruleset}
+        onAddRound={handleAddRound}
+      />
 
-      const playersInRound = partnerNames.length
-        ? [bidderName, ...partnerNames].join(" & ")
-        : bidderName;
+      {/* 3. LAST ROUNDS BELOW ROUND SELECTION + SCORING GRAPH */}
+      <RoundHistory
+        players={players}
+        rounds={rounds}
+        onUndoLastRound={handleUndoLastRound}
+      />
 
-      return (
-        <tr key={idx}>
-          {gameState.players.map((p: Player) => (
-            <td key={p.id} className="px-2 py-1 border text-center">
-              {r.changes?.[p.id] ?? 0}
-            </td>
-          ))}
-          <td className="border px-2 py-1">{r.bid}</td>
-          <td className="border px-2 py-1">{r.tricksMade ?? "-"}</td>
-          <td className="border px-2 py-1">{playersInRound}</td>
-          <td className="border px-2 py-1 text-center">
-            {r.success ? "✔" : "✖"}
-          </td>
-        </tr>
-      );
-    })}
-</tbody>
-        </table>
+      {/* Modals */}
+      <RulesModal
+        isOpen={isRulesOpen}
+        onClose={() => setIsRulesOpen(false)}
+      />
 
-        <button
-          onClick={handleSubmit}
-          className="mt-3 bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Volgende ronde
-        </button>
-      </div>
+      <EditPlayersModal
+        isOpen={isEditPlayersOpen}
+        players={players}
+        onClose={() => setIsEditPlayersOpen(false)}
+        onSave={handleSavePlayerNames}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmNewGameOpen}
+        title="Nieuw Spel Starten?"
+        message="Weet je zeker dat je een nieuw spel wilt starten? De huidige stand wordt opgeslagen in de geschiedenis."
+        confirmLabel="Nieuw Spel"
+        cancelLabel="Annuleren"
+        onConfirm={() => {
+          setIsConfirmNewGameOpen(false);
+          onStartNewGame();
+        }}
+        onCancel={() => setIsConfirmNewGameOpen(false)}
+      />
     </div>
   );
 }
