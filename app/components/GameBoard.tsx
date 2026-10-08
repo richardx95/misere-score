@@ -1,13 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { GameState, Player, Round, PlayerScoreChange } from "../lib/types";
-import { saveGame, saveToHistory } from "../lib/storage";
+import { GameState, Player } from "../lib/types";
 import ScoreHeader from "./ScoreHeader";
 import ScoreBoard from "./ScoreBoard";
-import RoundHistory from "./RoundHistory";
 import RulesModal from "./RulesModal";
 import ConfirmModal from "./ConfirmModal";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, TrendingUp } from "lucide-react";
 
 interface GameBoardProps {
   gameState: GameState;
@@ -15,70 +13,37 @@ interface GameBoardProps {
   onStartNewGame: () => void;
   onOpenRoundSelection: () => void;
   onOpenEditPlayers: () => void;
+  onOpenHistory: () => void;
 }
 
 export default function GameBoard({
   gameState,
-  setGameState,
   onStartNewGame,
   onOpenRoundSelection,
   onOpenEditPlayers,
+  onOpenHistory,
 }: GameBoardProps) {
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isConfirmNewGameOpen, setIsConfirmNewGameOpen] = useState(false);
 
   const { players, dealerIndex, currentRound, rounds, sittingOutIds } = gameState;
-  const currentDealer = players[dealerIndex]?.name || "Onbekend";
   const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
-
-  // Undo / Delete the latest round
-  const handleUndoLastRound = () => {
-    if (rounds.length === 0) return;
-
-    const roundToRevert = rounds[rounds.length - 1];
-    const previousRounds = rounds.slice(0, rounds.length - 1);
-
-    // Revert player scores
-    const revertedPlayers = players.map((p, i) => {
-      const change = roundToRevert.changes[i] || 0;
-      return {
-        ...p,
-        score: p.score - change,
-      };
-    });
-
-    // Revert dealer index and sitting out IDs
-    const previousDealerIndex = roundToRevert.dealerIndex;
-    const revertedSittingOutIds = roundToRevert.sittingOutIds ?? gameState.sittingOutIds;
-
-    const revertedState: GameState = {
-      ...gameState,
-      players: revertedPlayers,
-      dealerIndex: previousDealerIndex,
-      currentRound: Math.max(1, currentRound - 1),
-      sittingOutIds: revertedSittingOutIds,
-      rounds: previousRounds,
-    };
-
-    setGameState(revertedState);
-    saveGame(revertedState);
-  };
 
   return (
     <div className="flex flex-col h-[100dvh] max-w-md mx-auto bg-[#f8f9fa] border-x border-neutral-300 shadow-xl overflow-hidden p-2.5 sm:p-3">
-      {/* 1. Header (fixed) */}
+      {/* 1. Header with quick actions (Historie, Regels, Spelers, Nieuw) */}
       <div className="shrink-0">
         <ScoreHeader
           currentRound={currentRound}
-          dealerName={currentDealer}
+          onOpenHistory={onOpenHistory}
           onOpenRules={() => setIsRulesOpen(true)}
+          onOpenEditPlayers={onOpenEditPlayers}
           onNewGame={() => setIsConfirmNewGameOpen(true)}
-          onEditPlayers={onOpenEditPlayers}
         />
       </div>
 
-      {/* 2. Top: Players with their current score (fixed) */}
-      <div className="shrink-0 mb-2">
+      {/* 2. Top: Players with their current scores (generous space, no cramped scrolling) */}
+      <div className="shrink-0 mb-3">
         <ScoreBoard
           players={players}
           dealerIndex={dealerIndex}
@@ -87,25 +52,41 @@ export default function GameBoard({
         />
       </div>
 
-      {/* 3. Underneath: Button to start a new round (fixed) */}
-      <div className="shrink-0 mb-2.5">
+      {/* 3. Central Call-to-Action: Enter New Round */}
+      <div className="shrink-0 mb-3">
         <button
           type="button"
           onClick={onOpenRoundSelection}
-          className="w-full py-3 px-4 rounded-lg text-xs sm:text-sm font-black uppercase tracking-wider text-white bg-neutral-900 border-2 border-neutral-900 hover:bg-neutral-800 active:bg-black active:translate-y-0.5 shadow-sm transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 px-4 rounded-lg text-xs sm:text-sm font-black uppercase tracking-wider text-white bg-neutral-900 border-2 border-neutral-900 hover:bg-neutral-800 active:bg-black active:translate-y-0.5 shadow-md transition-all flex items-center justify-center gap-2"
         >
-          <PlusCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+          <PlusCircle className="w-5 h-5 text-emerald-400 shrink-0" />
           <span>Nieuwe Ronde Invoeren (Ronde {currentRound})</span>
           <span className="text-base font-normal">➔</span>
         </button>
       </div>
 
-      {/* 4. On the bottom: Scrollview with latest rounds & graph icon */}
-      <RoundHistory
-        players={players}
-        rounds={rounds}
-        onUndoLastRound={handleUndoLastRound}
-      />
+      {/* 4. Quick Game Status Footer Bar */}
+      <div className="mt-auto shrink-0 p-3 bg-white border-2 border-neutral-900 rounded-lg shadow-xs flex items-center justify-between text-xs">
+        <div>
+          <span className="font-bold text-neutral-800">
+            {rounds.length} {rounds.length === 1 ? "ronde" : "rondes"} gespeeld
+          </span>
+          {lastRound && (
+            <div className="text-[11px] text-neutral-500 truncate max-w-[200px]">
+              Laatste: {lastRound.bid} ({lastRound.success ? "Win" : "Verlies"})
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenHistory}
+          className="flex items-center gap-1.5 py-1.5 px-3 bg-neutral-100 border border-neutral-300 rounded-md text-xs font-bold text-neutral-800 hover:bg-neutral-200 active:bg-neutral-300 transition-colors"
+        >
+          <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+          <span>Bekijk Historie &amp; Grafiek</span>
+        </button>
+      </div>
 
       {/* Modals */}
       <RulesModal

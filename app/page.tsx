@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import PlayerSetup from "./components/PlayerSetup";
 import GameBoard from "./components/GameBoard";
 import RoundSelectionScreen from "./components/RoundSelectionScreen";
+import HistoryScreen from "./components/HistoryScreen";
 import FloatingSuits from "./components/FloatingSuits";
 import { GameState, Player, Round, PlayerScoreChange } from "./lib/types";
 import { loadGame, saveGame, saveToHistory } from "./lib/storage";
@@ -14,7 +15,7 @@ import {
   getActiveInGamePlayers,
 } from "./lib/rotation";
 
-type ScreenType = "setup" | "overview" | "round-entry";
+type ScreenType = "setup" | "overview" | "round-entry" | "history";
 
 export default function HomePage() {
   const [activeScreen, setActiveScreen] = useState<ScreenType>("setup");
@@ -25,7 +26,6 @@ export default function HomePage() {
   useEffect(() => {
     const existing = loadGame();
     if (existing) {
-      // Ensure sittingOutIds and activePlayerIds are defined
       if (!existing.sittingOutIds) {
         existing.sittingOutIds = getInitialSittingOutIds(existing.players);
       }
@@ -37,7 +37,6 @@ export default function HomePage() {
       }
       setSavedGame(existing);
 
-      // If there is an active ongoing game, start directly on the score overview
       if (existing.rounds && existing.rounds.length > 0 && !existing.isCompleted) {
         setGameState(existing);
         setActiveScreen("overview");
@@ -147,6 +146,37 @@ export default function HomePage() {
   const handleCancelEdit = () => {
     setActiveScreen("overview");
     setSetupMode("create");
+  };
+
+  // Handler: Undo latest round
+  const handleUndoLastRound = () => {
+    if (!gameState || gameState.rounds.length === 0) return;
+
+    const roundToRevert = gameState.rounds[gameState.rounds.length - 1];
+    const previousRounds = gameState.rounds.slice(0, gameState.rounds.length - 1);
+
+    // Revert scores
+    const revertedPlayers = gameState.players.map((p, i) => {
+      const change = roundToRevert.changes[i] || 0;
+      return {
+        ...p,
+        score: p.score - change,
+      };
+    });
+
+    const revertedState: GameState = {
+      ...gameState,
+      players: revertedPlayers,
+      dealerIndex: roundToRevert.dealerIndex,
+      currentRound: Math.max(1, gameState.currentRound - 1),
+      sittingOutIds: roundToRevert.sittingOutIds ?? gameState.sittingOutIds,
+      activePlayerIds: roundToRevert.activePlayerIds ?? gameState.activePlayerIds,
+      rounds: previousRounds,
+    };
+
+    setGameState(revertedState);
+    saveGame(revertedState);
+    saveToHistory(revertedState);
   };
 
   // Handler: Add a completed round from the round-entry screen
@@ -262,7 +292,7 @@ export default function HomePage() {
         />
       )}
 
-      {/* Screen 2: Score Overview (Players on top, + Ronde button, scrollview on bottom) */}
+      {/* Screen 2: Score Overview (Player cards + Start Ronde button + Status) */}
       {activeScreen === "overview" && gameState && (
         <GameBoard
           gameState={gameState}
@@ -270,10 +300,11 @@ export default function HomePage() {
           onStartNewGame={handleStartNewGame}
           onOpenRoundSelection={() => setActiveScreen("round-entry")}
           onOpenEditPlayers={handleOpenEditPlayers}
+          onOpenHistory={() => setActiveScreen("history")}
         />
       )}
 
-      {/* Screen 3: Round Selection (Misère bid, single player grid, made/lost, add button) */}
+      {/* Screen 3: Round Selection (3-step flow: 1. Bieding -> 2. Wie speelt er -> 3. Resultaat) */}
       {activeScreen === "round-entry" && gameState && (
         <RoundSelectionScreen
           players={gameState.players}
@@ -283,6 +314,16 @@ export default function HomePage() {
           activePlayerIds={gameState.activePlayerIds}
           onBack={() => setActiveScreen("overview")}
           onAddRound={handleAddRound}
+        />
+      )}
+
+      {/* Screen 4: Dedicated History & Graph Screen */}
+      {activeScreen === "history" && gameState && (
+        <HistoryScreen
+          players={gameState.players}
+          rounds={gameState.rounds}
+          onUndoLastRound={handleUndoLastRound}
+          onBack={() => setActiveScreen("overview")}
         />
       )}
     </div>

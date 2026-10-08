@@ -136,8 +136,12 @@ export function calculateRoundScores(
     return ensureZeroSum(changes, activeIndices);
   }
 
-  // 4. 🂪 Trek (alleen 5)
-  if (normalizedBid === "Trek (alleen 5)" || normalizedBid.includes("Trek (alleen")) {
+  // 4. 🂪 Trek 5 alleen
+  if (
+    normalizedBid === "Trek 5 alleen" ||
+    normalizedBid === "Trek (alleen 5)" ||
+    (normalizedBid.includes("Trek") && normalizedBid.includes("5"))
+  ) {
     const others = activeIndices.filter((i) => i !== bidderIndex);
     const tricks = typeof tricksMade === "number" ? tricksMade : parseInt(String(tricksMade), 10) || 0;
 

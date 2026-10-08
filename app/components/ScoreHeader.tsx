@@ -1,25 +1,25 @@
 "use client";
 import React from "react";
-import { BookOpen, RefreshCw, Users } from "lucide-react";
+import { BookOpen, RefreshCw, Users, TrendingUp } from "lucide-react";
 
 interface ScoreHeaderProps {
   currentRound: number;
-  dealerName: string;
+  onOpenHistory: () => void;
   onOpenRules: () => void;
+  onOpenEditPlayers: () => void;
   onNewGame: () => void;
-  onEditPlayers: () => void;
 }
 
 export default function ScoreHeader({
   currentRound,
-  dealerName,
+  onOpenHistory,
   onOpenRules,
+  onOpenEditPlayers,
   onNewGame,
-  onEditPlayers,
 }: ScoreHeaderProps) {
   return (
-    <header className="mb-3">
-      {/* Title with playing card suits */}
+    <header className="mb-2.5">
+      {/* Title bar with suits & current round */}
       <div className="flex items-center justify-between pb-2 border-b-2 border-neutral-900">
         <div className="flex items-center gap-1.5">
           <span className="text-base select-none text-red-600 font-serif">♥</span>
@@ -31,56 +31,53 @@ export default function ScoreHeader({
           <span className="text-base select-none text-neutral-900 font-serif">♣</span>
         </div>
 
-        {/* Round and Dealer Indicator */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white tracking-wider uppercase">
-            Ronde {currentRound}
-          </span>
-          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-300">
-            <span className="text-neutral-900 font-black">▼ Deler:</span>
-            <strong>{dealerName}</strong>
-          </span>
-        </div>
+        {/* Current Round badge */}
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-black bg-neutral-900 text-white tracking-wider uppercase">
+          Ronde {currentRound}
+        </span>
       </div>
 
-      {/* Sub-bar with quick actions */}
-      <div className="flex items-center justify-between pt-2 text-xs">
-        <div className="sm:hidden flex items-center gap-1 text-xs font-bold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-300">
-          <span className="text-neutral-900 font-black">▼ Deler:</span>
-          <strong>{dealerName}</strong>
-        </div>
+      {/* Sub-bar with quick actions: Historie, Regels, Spelers, Nieuw */}
+      <div className="grid grid-cols-4 gap-1.5 pt-2 text-xs">
+        <button
+          onClick={onOpenHistory}
+          type="button"
+          className="inline-flex items-center justify-center gap-1 py-1.5 px-2 text-xs font-bold bg-white border-2 border-neutral-300 rounded text-neutral-800 hover:border-neutral-900 active:bg-neutral-100 transition-colors shadow-2xs"
+          title="Ronde historie en scoreverloop grafiek"
+        >
+          <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+          <span>Historie</span>
+        </button>
 
-        <div className="flex items-center gap-1.5 ml-auto">
-          <button
-            onClick={onOpenRules}
-            type="button"
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white border border-neutral-300 rounded text-neutral-800 hover:bg-neutral-100 active:bg-neutral-200 transition-colors shadow-xs"
-            title="Spelregels en puntentelling"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Regels</span>
-          </button>
+        <button
+          onClick={onOpenRules}
+          type="button"
+          className="inline-flex items-center justify-center gap-1 py-1.5 px-2 text-xs font-bold bg-white border-2 border-neutral-300 rounded text-neutral-800 hover:border-neutral-900 active:bg-neutral-100 transition-colors shadow-2xs"
+          title="Spelregels en puntentelling"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-neutral-700" />
+          <span>Regels</span>
+        </button>
 
-          <button
-            onClick={onEditPlayers}
-            type="button"
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white border border-neutral-300 rounded text-neutral-800 hover:bg-neutral-100 active:bg-neutral-200 transition-colors shadow-xs"
-            title="Namen en actieve spelers aanpassen"
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Spelers</span>
-          </button>
+        <button
+          onClick={onOpenEditPlayers}
+          type="button"
+          className="inline-flex items-center justify-center gap-1 py-1.5 px-2 text-xs font-bold bg-white border-2 border-neutral-300 rounded text-neutral-800 hover:border-neutral-900 active:bg-neutral-100 transition-colors shadow-2xs"
+          title="Spelersnamen en afhakers aanpassen"
+        >
+          <Users className="w-3.5 h-3.5 text-neutral-700" />
+          <span>Spelers</span>
+        </button>
 
-          <button
-            onClick={onNewGame}
-            type="button"
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white border border-red-300 text-red-700 rounded hover:bg-red-50 active:bg-red-100 transition-colors shadow-xs"
-            title="Nieuw spel starten"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Nieuw</span>
-          </button>
-        </div>
+        <button
+          onClick={onNewGame}
+          type="button"
+          className="inline-flex items-center justify-center gap-1 py-1.5 px-2 text-xs font-bold bg-white border-2 border-red-300 text-red-700 rounded hover:bg-red-50 hover:border-red-600 active:bg-red-100 transition-colors shadow-2xs"
+          title="Nieuw spel starten"
+        >
+          <RefreshCw className="w-3.5 h-3.5 text-red-600" />
+          <span>Nieuw</span>
+        </button>
       </div>
     </header>
   );
