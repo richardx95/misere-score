@@ -67,8 +67,8 @@ export default function RoundSelectionScreen({
     return players.filter((p) => !effectiveActivePlayerIds.includes(p.id));
   }, [players, effectiveActivePlayerIds]);
 
-  // Selected bid ID
-  const [selectedBidId, setSelectedBidId] = useState<string>("trek_met");
+  // Selected bid ID (initially null so nothing is pre-selected)
+  const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
   // Player selection
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([]);
   // Tricks & success
@@ -331,81 +331,41 @@ export default function RoundSelectionScreen({
       </header>
 
       {/* 2. Body based on current step */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3">
         {/* ========================================================= */}
         {/* STAP 1: KIES EEN BIEDING (Geen dropdown, directe selectie) */}
         {/* ========================================================= */}
         {currentStep === 1 && (
-          <div className="space-y-2">
-            <div className="p-2.5 bg-neutral-100 rounded-lg border border-neutral-300 mb-2">
-              <span className="text-xs font-black uppercase text-neutral-800 block">
-                Kies de gespeelde bieding:
-              </span>
-              <span className="text-[11px] text-neutral-500">
-                Gerangschikt van laag (bovenaan) naar hoog (onderaan)
-              </span>
-            </div>
+          <div className="space-y-1">
+            {availableGameTypes.map((g, idx) => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => handleSelectBid(g.id)}
+                className="w-full py-2 px-2.5 rounded-lg border-2 border-neutral-300 hover:border-neutral-900 active:bg-neutral-100 bg-white text-neutral-900 text-left transition-all flex items-center justify-between shadow-2xs"
+              >
+                <div className="min-w-0 pr-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded flex items-center justify-center font-mono text-[10px] font-black bg-neutral-100 text-neutral-600">
+                      {idx + 1}
+                    </span>
+                    <span className="text-xs sm:text-sm font-black uppercase tracking-wide truncate">
+                      {g.name}
+                    </span>
+                  </div>
+                  <p className="text-[11px] truncate pl-7 text-neutral-500 leading-tight">
+                    {g.description}
+                  </p>
+                </div>
 
-            {/* List of 10 Bids */}
-            <div className="space-y-1.5">
-              {availableGameTypes.map((g, idx) => {
-                const isCurrent = selectedBidId === g.id;
-
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => handleSelectBid(g.id)}
-                    className={`w-full p-2.5 sm:p-3 rounded-lg border-2 text-left transition-all flex items-center justify-between ${
-                      isCurrent
-                        ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
-                        : "bg-white text-neutral-900 border-neutral-300 hover:border-neutral-900 active:bg-neutral-100"
-                    }`}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-5 h-5 rounded flex items-center justify-center font-mono text-[10px] font-black ${
-                            isCurrent
-                              ? "bg-white text-neutral-900"
-                              : "bg-neutral-100 text-neutral-600"
-                          }`}
-                        >
-                          {idx + 1}
-                        </span>
-                        <span className="text-xs sm:text-sm font-black uppercase tracking-wide truncate">
-                          {g.name}
-                        </span>
-                      </div>
-                      <p
-                        className={`text-[11px] mt-0.5 truncate pl-7 ${
-                          isCurrent ? "text-neutral-300" : "text-neutral-500"
-                        }`}
-                      >
-                        {g.description}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-1.5 pl-1">
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                          isCurrent
-                            ? "bg-neutral-800 text-neutral-200"
-                            : "bg-neutral-100 text-neutral-700"
-                        }`}
-                      >
-                        {g.basePoints}p
-                      </span>
-                      <ChevronRight
-                        className={`w-4 h-4 ${
-                          isCurrent ? "text-white" : "text-neutral-400"
-                        }`}
-                      />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                <div className="shrink-0 flex items-center gap-1.5 pl-1">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                    {g.basePoints}p
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-neutral-400" />
+                </div>
+              </button>
+            ))}
           </div>
         )}
 

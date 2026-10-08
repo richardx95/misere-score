@@ -24,21 +24,11 @@ export default function ScoreBoard({
 
   return (
     <div className="p-3 bg-white border-2 border-neutral-900 rounded-lg shadow-xs mb-3">
+      {/* Clean header: only Huidige Stand */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xs font-black tracking-wider text-neutral-600 uppercase flex items-center gap-1.5">
-          <span>Huidige Stand</span>
-          {sittingOutIds.length > 0 && (
-            <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-300 normal-case inline-flex items-center gap-1">
-              <span>🧀🍺🚽</span>
-              <span>{sittingOutIds.length === 1 ? "1 speler pauzeert" : "2 spelers pauzeren"}</span>
-            </span>
-          )}
+        <h2 className="text-xs font-black tracking-wider text-neutral-600 uppercase">
+          Huidige Stand
         </h2>
-        {hasGameStarted && (
-          <span className="text-[11px] text-neutral-500 font-mono font-bold">
-            Totaal: {players.reduce((sum, p) => sum + p.score, 0)} pnt
-          </span>
-        )}
       </div>
 
       {/* Grid of Player Score Cards - All active players have the same clean white background */}
@@ -85,17 +75,6 @@ export default function ScoreBoard({
                     </span>
                   )}
 
-                  {/* Dealer label badge */}
-                  {isDealer && !isSittingOut && (
-                    <span
-                      className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 bg-neutral-100 text-neutral-900 rounded border border-neutral-300"
-                      title="Deler (aan de beurt)"
-                    >
-                      <span className="text-[10px] text-neutral-900 font-black">▼</span>
-                      <span className="text-[9px] uppercase tracking-wide">Deler</span>
-                    </span>
-                  )}
-
                   {/* Dropped out badge */}
                   {isDroppedOut && (
                     <span className="inline-flex items-center text-[9px] font-black uppercase px-1.5 py-0.5 bg-neutral-200 text-neutral-600 rounded">
@@ -120,8 +99,8 @@ export default function ScoreBoard({
               {/* Downward triangle pointing directly to player's name when they are the dealer (aan de beurt) */}
               {isDealer ? (
                 <div
-                  className="flex items-center justify-center -mb-1 mt-0.5 text-neutral-900"
-                  title="Aan de beurt (deler)"
+                  className="flex items-center justify-center -mb-0.5 mt-0.5 text-neutral-900"
+                  title="Aan de beurt om te delen"
                 >
                   <span className="text-xs font-black leading-none">▼</span>
                 </div>
