@@ -6,7 +6,6 @@ import ScoreHeader from "./ScoreHeader";
 import ScoreBoard from "./ScoreBoard";
 import RoundHistory from "./RoundHistory";
 import RulesModal from "./RulesModal";
-import EditPlayersModal from "./EditPlayersModal";
 import ConfirmModal from "./ConfirmModal";
 import { PlusCircle } from "lucide-react";
 
@@ -28,7 +27,7 @@ export default function GameBoard({
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isConfirmNewGameOpen, setIsConfirmNewGameOpen] = useState(false);
 
-  const { players, dealerIndex, currentRound, rounds } = gameState;
+  const { players, dealerIndex, currentRound, rounds, sittingOutIds } = gameState;
   const currentDealer = players[dealerIndex]?.name || "Onbekend";
   const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
 
@@ -48,15 +47,16 @@ export default function GameBoard({
       };
     });
 
-    // Revert dealer index
-    const previousDealerIndex =
-      (dealerIndex - 1 + players.length) % players.length;
+    // Revert dealer index and sitting out IDs
+    const previousDealerIndex = roundToRevert.dealerIndex;
+    const revertedSittingOutIds = roundToRevert.sittingOutIds ?? gameState.sittingOutIds;
 
     const revertedState: GameState = {
       ...gameState,
       players: revertedPlayers,
       dealerIndex: previousDealerIndex,
       currentRound: Math.max(1, currentRound - 1),
+      sittingOutIds: revertedSittingOutIds,
       rounds: previousRounds,
     };
 
@@ -82,6 +82,7 @@ export default function GameBoard({
         <ScoreBoard
           players={players}
           dealerIndex={dealerIndex}
+          sittingOutIds={sittingOutIds}
           lastRoundChanges={lastRound?.changes}
         />
       </div>
@@ -114,7 +115,7 @@ export default function GameBoard({
 
       <ConfirmModal
         isOpen={isConfirmNewGameOpen}
-        title="Nieuw Spel Starten?"
+        title="Nieuw Misère Spel Starten?"
         message="Weet je zeker dat je een nieuw spel wilt starten? De huidige stand wordt opgeslagen in de geschiedenis."
         confirmLabel="Nieuw Spel"
         cancelLabel="Annuleren"

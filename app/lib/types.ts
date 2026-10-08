@@ -2,7 +2,8 @@ export interface Player {
   id: number;
   name: string;
   score: number;
-  active?: boolean;
+  dealer?: boolean;
+  isActiveInGame: boolean; // false if player dropped out mid-game
 }
 
 export interface PlayerScoreChange {
@@ -19,6 +20,8 @@ export interface Round {
   bid: string;
   bidderId: number;
   partnerIds: number[];
+  activePlayerIds: number[]; // exactly 4 players who played
+  sittingOutIds: number[]; // players who sat out this round (0 points)
   tricksMade?: number | string;
   success: boolean;
   scoreChanges: PlayerScoreChange[];
@@ -33,8 +36,10 @@ export interface GameState {
   dealerIndex: number;
   currentRound: number;
   rounds: Round[];
-  activePlayerIds: number[];
-  ruleset: "family" | "classic";
+  sittingOutIds: number[]; // Player IDs currently sitting out this round
+  activePlayerIds: number[]; // Exactly 4 player IDs who play this round
+  initialSittingOutIds?: number[];
+  ruleset?: string;
   dateStarted: string;
   isCompleted: boolean;
 }

@@ -1,20 +1,24 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { Player } from "../lib/types";
-import { FAMILY_GAME_TYPES, CLASSIC_RIKKEN_GAME_TYPES, GameType } from "../lib/gameTypes";
+import { MISERE_GAME_TYPES, GameType } from "../lib/gameTypes";
 import { calculateRoundScores } from "../lib/scoring";
-import { ArrowLeft, Check, X, Plus, Minus, AlertCircle, ShieldAlert } from "lucide-react";
+import { getRoundActivePlayerIds } from "../lib/rotation";
+import { ArrowLeft, Check, X, Plus, Minus, AlertCircle, ShieldAlert, Users, Info } from "lucide-react";
 
 interface RoundSelectionScreenProps {
   players: Player[];
   dealerIndex: number;
   currentRound: number;
-  ruleset: "family" | "classic";
+  sittingOutIds?: number[];
+  activePlayerIds?: number[];
   onBack: () => void;
   onAddRound: (roundData: {
     bid: string;
     bidderId: number;
     partnerIds: number[];
+    activePlayerIds: number[];
+    sittingOutIds: number[];
     tricksMade?: number | string;
     success: boolean;
     changes: number[];
@@ -26,16 +30,29 @@ export default function RoundSelectionScreen({
   players,
   dealerIndex,
   currentRound,
-  ruleset,
+  sittingOutIds = [],
+  activePlayerIds,
   onBack,
   onAddRound,
 }: RoundSelectionScreenProps) {
-  // Available games based on ruleset
-  const availableGameTypes = useMemo(() => {
-    return ruleset === "family"
-      ? [...FAMILY_GAME_TYPES, ...CLASSIC_RIKKEN_GAME_TYPES]
-      : [...CLASSIC_RIKKEN_GAME_TYPES, ...FAMILY_GAME_TYPES];
-  }, [ruleset]);
+  // Available games: Misère family only
+  const availableGameTypes = MISERE_GAME_TYPES;
+
+  // Compute the 4 active players for this round
+  const effectiveActivePlayerIds = useMemo(() => {
+    if (activePlayerIds && activePlayerIds.length > 0) {
+      return activePlayerIds;
+    }
+    return getRoundActivePlayerIds(players, sittingOutIds);
+  }, [players, sittingOutIds, activePlayerIds]);
+
+  const activePlayers = useMemo(() => {
+    return players.filter((p) => effectiveActivePlayerIds.includes(p.id));
+  }, [players, effectiveActivePlayerIds]);
+
+  const inactivePlayers = useMemo(() => {
+    return players.filter((p) => !effectiveActivePlayerIds.includes(p.id));
+  }, [players, effectiveActivePlayerIds]);
 
   const [selectedBidId, setSelectedBidId] = useState<string>("trek_met");
   // ONE SINGLE SELECTION of player IDs:
@@ -48,7 +65,7 @@ export default function RoundSelectionScreen({
   const currentGameType: GameType = useMemo(() => {
     return (
       availableGameTypes.find((g) => g.id === selectedBidId) ||
-      FAMILY_GAME_TYPES[0]
+      availableGameTypes[0]
     );
   }, [availableGameTypes, selectedBidId]);
 
@@ -64,10 +81,10 @@ export default function RoundSelectionScreen({
       return { min: 1, max: 3, label: "1 t/m 3 spelers (die Misère gaan)", type: "misere" };
     }
     if (currentGameType.requiresPartner) {
-      return { min: 2, max: 2, label: "Precies 2 spelers (Duo)", type: "duo" };
+      return { min: 2, max: 2, label: "Precies 2 spelers (Duo: bieder & maat)", type: "duo" };
     }
     // Solo
-    return { min: 1, max: 1, label: "Precies 1 speler (Solo)", type: "solo" };
+    return { min: 1, max: 1, label: "Precies 1 speler (Solo bieder)", type: "solo" };
   }, [currentGameType]);
 
   // Reset or adjust when bid changes
@@ -113,12 +130,10 @@ export default function RoundSelectionScreen({
       setIsSuccess(tricksWon >= 9);
     } else if (currentGameType.id === "13_alleen") {
       setIsSuccess(tricksWon === 13);
-    } else if (currentGameType.id === "rik_classic" || currentGameType.id === "betere_rik_classic") {
-      setIsSuccess(tricksWon >= 8);
     }
   }, [tricksWon, troelaPreset, currentGameType]);
 
-  // SINGLE GRID: Toggle player selection
+  // SINGLE GRID: Toggle active player selection
   const handleTogglePlayer = (id: number) => {
     if (selectedPlayerIds.includes(id)) {
       // Deselect
@@ -171,23 +186,17 @@ export default function RoundSelectionScreen({
       };
     }
 
-    const idToIndex = Object.fromEntries(players.map((p, i) => [p.id, i]));
     const bidderId = selectedPlayerIds[0];
     const partnerIds = selectedPlayerIds.slice(1);
-
-    const effectiveBidderIdx = idToIndex[bidderId] ?? 0;
-    const effectivePartnerIndices = partnerIds
-      .map((id) => idToIndex[id])
-      .filter((i) => i !== undefined);
 
     const changes = calculateRoundScores(
       currentGameType.name,
       isSuccess,
       0,
       players,
-      effectiveBidderIdx,
-      effectivePartnerIndices,
-      players.map((p) => p.id),
+      bidderId,
+      partnerIds,
+      effectiveActivePlayerIds,
       currentTricksValue,
       false,
       selectedPlayerIds
@@ -198,7 +207,16 @@ export default function RoundSelectionScreen({
       isValid: true,
       message: "",
     };
-  }, [players, selectedPlayerIds, isPlayerSelectionValid, playerRule, currentGameType, isSuccess, currentTricksValue]);
+  }, [
+    players,
+    selectedPlayerIds,
+    isPlayerSelectionValid,
+    playerRule,
+    currentGameType,
+    isSuccess,
+    effectiveActivePlayerIds,
+    currentTricksValue,
+  ]);
 
   // Handle submit round
   const handleSubmit = (e: React.FormEvent) => {
@@ -237,12 +255,16 @@ export default function RoundSelectionScreen({
       bid: currentGameType.name,
       bidderId,
       partnerIds,
+      activePlayerIds: effectiveActivePlayerIds,
+      sittingOutIds,
       tricksMade: currentTricksValue,
       success: isSuccess,
       changes: preview.changes,
       summary,
     });
   };
+
+  const dealer = players[dealerIndex]?.name || "Onbekend";
 
   return (
     <div className="flex flex-col h-[100dvh] max-w-md mx-auto bg-[#f8f9fa] border-x border-neutral-300 shadow-xl overflow-hidden">
@@ -267,49 +289,40 @@ export default function RoundSelectionScreen({
         </div>
 
         <span className="text-[10px] font-bold px-2 py-1 bg-amber-100 text-amber-900 rounded border border-amber-300">
-          🎴 {players[dealerIndex]?.name}
+          🎴 {dealer}
         </span>
       </header>
 
       {/* 2. Scrollable Form Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3.5">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
         {/* Step A: Bieding Kiezen */}
-        <div className="rikken-card p-3 bg-white">
+        <div className="p-3 bg-white border-2 border-neutral-900 rounded-lg shadow-xs">
           <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-600 mb-1">
-            1. Bieding / Speltype
+            1. Bieding / Misère Speltype
           </label>
           <div className="relative">
             <select
               value={selectedBidId}
               onChange={(e) => setSelectedBidId(e.target.value)}
-              className="w-full bg-white border-2 border-neutral-900 rounded-md py-2 px-3 text-xs sm:text-sm font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 appearance-none cursor-pointer"
+              className="w-full bg-white border-2 border-neutral-900 rounded-md py-2 px-3 text-xs sm:text-sm font-bold text-neutral-900 focus:outline-none appearance-none cursor-pointer"
             >
-              <optgroup label="Familieregels Biedingen">
-                {FAMILY_GAME_TYPES.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} ({g.basePoints}p)
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Klassiek Rikken Biedingen">
-                {CLASSIC_RIKKEN_GAME_TYPES.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} ({g.basePoints}p)
-                  </option>
-                ))}
-              </optgroup>
+              {availableGameTypes.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name} ({g.basePoints}p)
+                </option>
+              ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-700">
               ▼
             </div>
           </div>
-          <p className="mt-1 text-[11px] text-neutral-500 italic">
+          <p className="mt-1 text-[11px] text-neutral-600 font-medium">
             {currentGameType.description}
           </p>
         </div>
 
         {/* Step B: ONE SINGLE GRID TO SELECT / DESELECT PLAYERS */}
-        <div className="rikken-card p-3 bg-white">
+        <div className="p-3 bg-white border-2 border-neutral-900 rounded-lg shadow-xs">
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-[11px] font-black uppercase tracking-wider text-neutral-700">
               2. Spelers Selecteren
@@ -338,9 +351,9 @@ export default function RoundSelectionScreen({
             )}
           </div>
 
-          {/* SINGLE GRID OF ALL PLAYERS */}
+          {/* SINGLE GRID OF THE 4 ACTIVE PLAYERS */}
           <div className="grid grid-cols-2 gap-2">
-            {players.map((p) => {
+            {activePlayers.map((p) => {
               const isSelected = selectedPlayerIds.includes(p.id);
               const selectionOrder = selectedPlayerIds.indexOf(p.id);
 
@@ -349,7 +362,7 @@ export default function RoundSelectionScreen({
                   key={p.id}
                   type="button"
                   onClick={() => handleTogglePlayer(p.id)}
-                  className={`min-h-[48px] p-2.5 rounded-md border-2 text-left transition-all relative flex flex-col justify-between ${
+                  className={`min-h-[50px] p-2.5 rounded-md border-2 text-left transition-all relative flex flex-col justify-between ${
                     isSelected
                       ? "bg-neutral-900 text-white border-neutral-900 shadow-sm"
                       : "bg-white text-neutral-900 border-neutral-300 hover:border-neutral-900 active:bg-neutral-100"
@@ -388,11 +401,40 @@ export default function RoundSelectionScreen({
               );
             })}
           </div>
+
+          {/* Inactive & Sitting out players indicator */}
+          {inactivePlayers.length > 0 && (
+            <div className="mt-2.5 pt-2 border-t border-neutral-200">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1 flex items-center gap-1">
+                <span>Niet aan tafel deze ronde:</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {inactivePlayers.map((p) => {
+                  const isDroppedOut = p.isActiveInGame === false;
+                  return (
+                    <span
+                      key={p.id}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
+                        isDroppedOut
+                          ? "bg-neutral-100 text-neutral-500 border-neutral-300"
+                          : "bg-amber-50 text-amber-900 border-amber-300"
+                      }`}
+                    >
+                      <span>{p.name}</span>
+                      <span className="text-[9px] uppercase font-black opacity-80">
+                        {isDroppedOut ? "(Afgehaakt)" : "(Pauze • 0p)"}
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Step C: Slagen & Resultaat (Made it / Lost it) */}
         {!currentGameType.isPenalty && (
-          <div className="rikken-card p-3 bg-white">
+          <div className="p-3 bg-white border-2 border-neutral-900 rounded-lg shadow-xs">
             <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-700 mb-2">
               3. Slagen &amp; Resultaat
             </label>
@@ -541,7 +583,7 @@ export default function RoundSelectionScreen({
         )}
 
         {/* Step D: Live Score Preview */}
-        <div className="rikken-card p-2.5 bg-neutral-100">
+        <div className="p-2.5 bg-neutral-100 border-2 border-neutral-300 rounded-lg">
           <div className="flex items-center justify-between text-[11px] font-bold text-neutral-600 mb-1 uppercase tracking-wide">
             <span>Score Wijziging Voorvertoning:</span>
             {preview.isValid && (
@@ -552,17 +594,31 @@ export default function RoundSelectionScreen({
           </div>
 
           {preview.isValid ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-center font-mono text-xs">
+            <div
+              className={`grid gap-1 text-center font-mono text-xs ${
+                players.length <= 4
+                  ? "grid-cols-2 sm:grid-cols-4"
+                  : players.length === 5
+                  ? "grid-cols-2 sm:grid-cols-5"
+                  : "grid-cols-2 sm:grid-cols-3"
+              }`}
+            >
               {players.map((p, idx) => {
                 const delta = preview.changes[idx];
                 const isPos = delta > 0;
                 const isNeg = delta < 0;
+                const isSitting = sittingOutIds.includes(p.id);
+                const isDropped = p.isActiveInGame === false;
 
                 return (
                   <div
                     key={p.id}
                     className={`py-1 px-1 rounded border ${
-                      isPos
+                      isDropped
+                        ? "bg-neutral-200 border-neutral-300 text-neutral-400"
+                        : isSitting
+                        ? "bg-amber-50/60 border-amber-200 text-neutral-500"
+                        : isPos
                         ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold"
                         : isNeg
                         ? "bg-red-50 border-red-300 text-red-800 font-bold"
@@ -573,7 +629,13 @@ export default function RoundSelectionScreen({
                       {p.name}
                     </div>
                     <div className="text-xs sm:text-sm font-black">
-                      {isPos ? `+${delta}` : delta}
+                      {isDropped
+                        ? "0 (Af)"
+                        : isSitting
+                        ? "0 (Pauze)"
+                        : isPos
+                        ? `+${delta}`
+                        : delta}
                     </div>
                   </div>
                 );

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { X, BookOpen, Award } from "lucide-react";
+import { X, BookOpen, Users, Award } from "lucide-react";
 
 interface RulesModalProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ interface RulesModalProps {
 }
 
 export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
-  const [activeTab, setActiveTab] = useState<"family" | "points" | "classic">("family");
+  const [activeTab, setActiveTab] = useState<"family" | "points" | "rotation">("family");
 
   if (!isOpen) return null;
 
@@ -20,7 +20,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-neutral-800" />
             <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-neutral-900">
-              Spelregels &amp; Puntentelling
+              Misère Spelregels &amp; Rotatie
             </h3>
           </div>
           <button
@@ -43,7 +43,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 : "border-transparent text-neutral-600 hover:text-neutral-900"
             }`}
           >
-            Onze Regels
+            Biedingen
           </button>
           <button
             type="button"
@@ -58,14 +58,14 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("classic")}
+            onClick={() => setActiveTab("rotation")}
             className={`py-1.5 px-3 rounded-t-md font-bold uppercase tracking-wider transition-colors border-t border-x ${
-              activeTab === "classic"
+              activeTab === "rotation"
                 ? "bg-white border-neutral-300 border-b-white text-neutral-900"
                 : "border-transparent text-neutral-600 hover:text-neutral-900"
             }`}
           >
-            Klassiek
+            5 &amp; 6 Spelers
           </button>
         </div>
 
@@ -79,7 +79,8 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 </h4>
                 <p>
                   Het spel wordt gespeeld met een standaard kaartspel van 52 kaarten zonder jokers.
-                  De deler rouleert elke ronde met de klok mee.
+                  Er spelen altijd precies 4 spelers mee in een ronde. De deler en eventuele
+                  wisselspelers rouleren elke ronde met de klok mee.
                 </p>
               </div>
 
@@ -107,7 +108,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 <p>
                   Deze app berekent alle scores automatisch en garandeert een constante
                   puntensom (zero-sum: wat gewonnen wordt, wordt door de tegenspelers betaald).
-                  Zo ontstaan er nooit meer telfouten tijdens het kaarten!
+                  Spelers die pauzeren ontvangen 0 punten.
                 </p>
               </div>
             </div>
@@ -166,20 +167,47 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
             </div>
           )}
 
-          {activeTab === "classic" && (
-            <div className="space-y-2">
-              <p>
-                Klassiek Rikken volgt de standaard Brabantse &amp; Limburgse rikkensregels:
-              </p>
-              <ul className="list-disc list-inside space-y-1 font-medium">
-                <li><strong>Rik / Betere rik:</strong> 10p basis + 5p per overslag (Kapot = +35p bonus)</li>
-                <li><strong>8 alleen:</strong> 10p basis + 5p per overslag</li>
-                <li><strong>Piek:</strong> Precies 1 slag halen (15p)</li>
-                <li><strong>10 alleen:</strong> 30p basis + 5p per overslag</li>
-                <li><strong>Open Piek:</strong> Precies 1 slag open (40p)</li>
-                <li><strong>11 alleen:</strong> 40p basis + 5p per overslag</li>
-                <li><strong>Één of vijf:</strong> 10p voor wie precies 1 of 5 slagen haalt</li>
-              </ul>
+          {activeTab === "rotation" && (
+            <div className="space-y-3">
+              <div className="p-2.5 bg-neutral-50 rounded border border-neutral-200">
+                <h4 className="font-bold text-neutral-900 uppercase text-[11px] mb-1 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>5 Spelers Rotatie</span>
+                </h4>
+                <p className="mb-1.5">
+                  Elke ronde spelen precies 4 spelers mee en pauzeert 1 speler (krijgt 0 punten).
+                </p>
+                <p className="text-neutral-600">
+                  De beurt om te pauzeren schuift elke ronde met de klok mee op. Zo speelt
+                  iedereen steeds 4 rondes op rij en pauzeert men 1 ronde.
+                </p>
+              </div>
+
+              <div className="p-2.5 bg-neutral-50 rounded border border-neutral-200">
+                <h4 className="font-bold text-neutral-900 uppercase text-[11px] mb-1 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>6 Spelers Rotatie</span>
+                </h4>
+                <p className="mb-1.5">
+                  Elke ronde spelen precies 4 spelers mee en pauzeren 2 spelers (0 punten).
+                </p>
+                <p className="text-neutral-600">
+                  De wissel schuift elke ronde 1 plek met de klok mee: elke ronde komt er 1 speler terug
+                  aan tafel en gaat er 1 speler naar de bank. Daardoor pauzeert iedere speler telkens
+                  precies 2 opeenvolgende rondes en speelt daarna 4 rondes.
+                </p>
+              </div>
+
+              <div className="p-2.5 bg-amber-50 rounded border border-amber-300">
+                <h4 className="font-bold text-amber-950 uppercase text-[11px] mb-1">
+                  Tussentijdse Afhakers
+                </h4>
+                <p className="text-amber-900">
+                  Als een speler voortijdig moet stoppen (bv. bij 5 of 6 spelers), kan deze speler op
+                  afgehaakt worden gezet. De behaalde score blijft bevroren en zichtbaar in het overzicht,
+                  en de rotatie past zich direct aan naar de overgebleven spelers.
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Misère & Rikken Score Tracker",
-  description: "Eenvoudig en foutloos scores bijhouden voor ons traditionele kaartspel",
+  title: "Misère Score Tracker",
+  description: "Eenvoudig en foutloos scores bijhouden voor ons traditionele Misère kaartspel",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Score Tracker",
+    title: "Misère Score",
   },
 };
 

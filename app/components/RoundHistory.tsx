@@ -79,7 +79,7 @@ export default function RoundHistory({
   };
 
   return (
-    <div className="rikken-card p-3 border-2 border-neutral-900 shadow-sm flex flex-col flex-1 min-h-0 bg-white">
+    <div className="p-3 border-2 border-neutral-900 rounded-lg shadow-xs flex flex-col flex-1 min-h-0 bg-white">
       {/* Header with View Toggle (List vs Graph icon) */}
       <div className="shrink-0 flex items-center justify-between pb-2 mb-2 border-b border-neutral-200">
         <h2 className="text-xs font-black tracking-wider text-neutral-900 uppercase">
@@ -274,11 +274,20 @@ export default function RoundHistory({
                   )}
 
                   {/* Score Deltas for all players */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[11px] font-mono pt-1 border-t border-neutral-100">
-                    {players.map((p) => {
-                      const change = r.changes[p.id] ?? 0;
+                  <div
+                    className={`grid gap-1 text-[11px] font-mono pt-1 border-t border-neutral-100 ${
+                      players.length <= 4
+                        ? "grid-cols-2 sm:grid-cols-4"
+                        : players.length === 5
+                        ? "grid-cols-2 sm:grid-cols-5"
+                        : "grid-cols-2 sm:grid-cols-3"
+                    }`}
+                  >
+                    {players.map((p, idx) => {
+                      const change = r.changes[idx] ?? 0;
                       const isPos = change > 0;
                       const isNeg = change < 0;
+                      const wasSittingOut = r.sittingOutIds?.includes(p.id);
 
                       return (
                         <div
@@ -290,14 +299,16 @@ export default function RoundHistory({
                           </span>
                           <span
                             className={`font-bold ml-1 ${
-                              isPos
+                              wasSittingOut
+                                ? "text-neutral-400"
+                                : isPos
                                 ? "text-emerald-700"
                                 : isNeg
                                 ? "text-red-700"
                                 : "text-neutral-500"
                             }`}
                           >
-                            {isPos ? `+${change}` : change}
+                            {wasSittingOut ? "0 (Pauze)" : isPos ? `+${change}` : change}
                           </span>
                         </div>
                       );

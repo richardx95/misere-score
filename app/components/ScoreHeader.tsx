@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { BookOpen, RefreshCw, UserCheck } from "lucide-react";
+import { BookOpen, RefreshCw, Users } from "lucide-react";
 
 interface ScoreHeaderProps {
   currentRound: number;
@@ -65,10 +65,10 @@ export default function ScoreHeader({
             onClick={onEditPlayers}
             type="button"
             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white border border-neutral-300 rounded text-neutral-800 hover:bg-neutral-100 active:bg-neutral-200 transition-colors shadow-xs"
-            title="Namen aanpassen"
+            title="Namen en actieve spelers aanpassen"
           >
-            <UserCheck className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">Namen</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>Spelers</span>
           </button>
 
           <button
