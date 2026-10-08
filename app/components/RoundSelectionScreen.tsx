@@ -288,8 +288,8 @@ export default function RoundSelectionScreen({
           </h1>
         </div>
 
-        <span className="text-[10px] font-bold px-2 py-1 bg-amber-100 text-amber-900 rounded border border-amber-300">
-          🎴 {dealer}
+        <span className="text-[10px] font-bold px-2 py-1 bg-neutral-100 text-neutral-900 rounded border border-neutral-300">
+          <span className="text-neutral-900 font-black">▼ Deler:</span> {dealer}
         </span>
       </header>
 
@@ -414,15 +414,11 @@ export default function RoundSelectionScreen({
                   return (
                     <span
                       key={p.id}
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
-                        isDroppedOut
-                          ? "bg-neutral-100 text-neutral-500 border-neutral-300"
-                          : "bg-amber-50 text-amber-900 border-amber-300"
-                      }`}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 border-neutral-300"
                     >
                       <span>{p.name}</span>
-                      <span className="text-[9px] uppercase font-black opacity-80">
-                        {isDroppedOut ? "(Afgehaakt)" : "(Pauze • 0p)"}
+                      <span className="text-[9px] uppercase font-black opacity-85">
+                        {isDroppedOut ? "(Afgehaakt)" : "(🧀🍺🚽 Pauze • 0p)"}
                       </span>
                     </span>
                   );
@@ -617,7 +613,7 @@ export default function RoundSelectionScreen({
                       isDropped
                         ? "bg-neutral-200 border-neutral-300 text-neutral-400"
                         : isSitting
-                        ? "bg-amber-50/60 border-amber-200 text-neutral-500"
+                        ? "bg-neutral-100 border-neutral-200 text-neutral-500"
                         : isPos
                         ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold"
                         : isNeg
@@ -632,7 +628,7 @@ export default function RoundSelectionScreen({
                       {isDropped
                         ? "0 (Af)"
                         : isSitting
-                        ? "0 (Pauze)"
+                        ? "0 (🧀🍺)"
                         : isPos
                         ? `+${delta}`
                         : delta}

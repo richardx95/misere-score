@@ -15,7 +15,7 @@ export default function ScoreBoard({
   sittingOutIds = [],
   lastRoundChanges,
 }: ScoreBoardProps) {
-  // Find highest score among active players to display crown
+  // Find highest score among active players to display trophy
   const activeScores = players
     .filter((p) => p.isActiveInGame !== false)
     .map((p) => p.score);
@@ -28,8 +28,9 @@ export default function ScoreBoard({
         <h2 className="text-xs font-black tracking-wider text-neutral-600 uppercase flex items-center gap-1.5">
           <span>Huidige Stand</span>
           {sittingOutIds.length > 0 && (
-            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300 normal-case">
-              {sittingOutIds.length === 1 ? "1 speler op de bank" : "2 spelers op de bank"}
+            <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-300 normal-case inline-flex items-center gap-1">
+              <span>🧀🍺🚽</span>
+              <span>{sittingOutIds.length === 1 ? "1 speler pauzeert" : "2 spelers pauzeren"}</span>
             </span>
           )}
         </h2>
@@ -40,7 +41,7 @@ export default function ScoreBoard({
         )}
       </div>
 
-      {/* Grid of Player Score Cards */}
+      {/* Grid of Player Score Cards - All active players have the same clean white background */}
       <div
         className={`grid gap-2 ${
           players.length <= 4
@@ -64,51 +65,74 @@ export default function ScoreBoard({
           return (
             <div
               key={player.id}
-              className={`relative flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-md border-2 transition-all ${
+              className={`relative flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-lg border-2 transition-all ${
                 isDroppedOut
-                  ? "bg-neutral-100 border-neutral-300 opacity-60"
-                  : isSittingOut
-                  ? "bg-amber-50/50 border-amber-300"
-                  : isLeader
-                  ? "bg-amber-50/80 border-neutral-900 shadow-xs"
-                  : "bg-white border-neutral-200"
+                  ? "bg-neutral-100 border-neutral-200 opacity-55"
+                  : "bg-white border-neutral-200 hover:border-neutral-300"
               }`}
             >
-              {/* Badges on Top */}
-              <div className="flex items-center justify-between w-full min-h-[18px] mb-1">
-                <div className="flex items-center gap-1">
-                  {isDealer && (
-                    <span className="inline-flex items-center text-[10px] font-bold px-1 py-0.2 bg-amber-200 text-amber-900 rounded border border-amber-400">
-                      🎴 Deler
-                    </span>
-                  )}
+              {/* Badges Bar on Top */}
+              <div className="flex items-center justify-between w-full min-h-[20px] mb-1">
+                <div className="flex items-center gap-1 min-w-0">
+                  {/* Sitting out pause badge with wc, drink, cheese emojis */}
                   {isSittingOut && (
-                    <span className="inline-flex items-center text-[10px] font-black uppercase px-1 py-0.2 bg-amber-500 text-white rounded">
-                      Pauze
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 bg-neutral-100 text-neutral-800 rounded border border-neutral-300"
+                      title="Pauze (even naar de wc, drankje pakken of kaasje snijden)"
+                    >
+                      <span className="text-[11px] leading-none">🧀🍺🚽</span>
+                      <span className="text-[9px] font-black uppercase tracking-tight ml-0.5">Pauze</span>
                     </span>
                   )}
+
+                  {/* Dealer label badge */}
+                  {isDealer && !isSittingOut && (
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 bg-neutral-100 text-neutral-900 rounded border border-neutral-300"
+                      title="Deler (aan de beurt)"
+                    >
+                      <span className="text-[10px] text-neutral-900 font-black">▼</span>
+                      <span className="text-[9px] uppercase tracking-wide">Deler</span>
+                    </span>
+                  )}
+
+                  {/* Dropped out badge */}
                   {isDroppedOut && (
-                    <span className="inline-flex items-center text-[10px] font-black uppercase px-1 py-0.2 bg-neutral-600 text-white rounded">
+                    <span className="inline-flex items-center text-[9px] font-black uppercase px-1.5 py-0.5 bg-neutral-200 text-neutral-600 rounded">
                       Afgehaakt
                     </span>
                   )}
                 </div>
 
-                {/* Leader crown */}
-                {isLeader && (
+                {/* Leader trophy icon */}
+                {isLeader ? (
                   <span
-                    className="inline-flex items-center justify-center text-amber-600 font-bold text-sm leading-none"
-                    title="Huidige leider"
+                    className="inline-flex items-center text-sm leading-none ml-auto"
+                    title="Topscorer (hoogste score)"
                   >
-                    ♚
+                    🏆
                   </span>
+                ) : (
+                  <span className="w-4" />
                 )}
               </div>
 
+              {/* Downward triangle pointing directly to player's name when they are the dealer (aan de beurt) */}
+              {isDealer ? (
+                <div
+                  className="flex items-center justify-center -mb-1 mt-0.5 text-neutral-900"
+                  title="Aan de beurt (deler)"
+                >
+                  <span className="text-xs font-black leading-none">▼</span>
+                </div>
+              ) : (
+                <div className="h-3 select-none pointer-events-none" />
+              )}
+
               {/* Player Name */}
               <div
-                className={`text-xs sm:text-sm font-bold uppercase tracking-wide truncate max-w-full text-center ${
-                  isDroppedOut ? "line-through text-neutral-500" : "text-neutral-800"
+                className={`text-xs sm:text-sm font-black uppercase tracking-wide truncate max-w-full text-center ${
+                  isDroppedOut ? "line-through text-neutral-400" : "text-neutral-800"
                 }`}
               >
                 {player.name}
@@ -118,7 +142,7 @@ export default function ScoreBoard({
               <div
                 className={`mono-score text-2xl sm:text-3xl font-black my-0.5 tracking-tight ${
                   isDroppedOut
-                    ? "text-neutral-500"
+                    ? "text-neutral-400"
                     : isPositive
                     ? "text-emerald-700"
                     : isNegative

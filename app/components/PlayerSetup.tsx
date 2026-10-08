@@ -289,8 +289,8 @@ export default function PlayerSetup({
                         />
 
                         {!isEditMode && dealerIndex === i && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded shrink-0">
-                            🎴 Deler
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-neutral-100 text-neutral-900 border border-neutral-300 rounded shrink-0">
+                            ▼ Deler
                           </span>
                         )}
 
@@ -375,14 +375,15 @@ export default function PlayerSetup({
                         onClick={() => handleToggleSittingOut(i)}
                         className={`p-2 rounded-md border-2 text-xs font-bold transition-all text-left flex items-center justify-between ${
                           isSelected
-                            ? "bg-amber-100 text-amber-950 border-amber-600 shadow-xs"
-                            : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-500"
+                            ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
+                            : "bg-white text-neutral-800 border-neutral-300 hover:border-neutral-500"
                         }`}
                       >
                         <span className="truncate">{name}</span>
                         {isSelected && (
-                          <span className="text-[10px] font-black uppercase px-1 py-0.2 bg-amber-600 text-white rounded shrink-0">
-                            Pauze
+                          <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-neutral-800 text-white rounded shrink-0 flex items-center gap-1">
+                            <span>🧀🍺</span>
+                            <span>Pauze</span>
                           </span>
                         )}
                       </button>

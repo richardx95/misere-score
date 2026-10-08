@@ -36,8 +36,8 @@ export default function ScoreHeader({
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white tracking-wider uppercase">
             Ronde {currentRound}
           </span>
-          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900 border border-amber-300">
-            <span>🎴 Deler:</span>
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-300">
+            <span className="text-neutral-900 font-black">▼ Deler:</span>
             <strong>{dealerName}</strong>
           </span>
         </div>
@@ -45,9 +45,9 @@ export default function ScoreHeader({
 
       {/* Sub-bar with quick actions */}
       <div className="flex items-center justify-between pt-2 text-xs">
-        <div className="sm:hidden flex items-center gap-1 text-xs text-neutral-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-          <span>🎴 Deler:</span>
-          <strong className="text-neutral-900">{dealerName}</strong>
+        <div className="sm:hidden flex items-center gap-1 text-xs font-bold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-300">
+          <span className="text-neutral-900 font-black">▼ Deler:</span>
+          <strong>{dealerName}</strong>
         </div>
 
         <div className="flex items-center gap-1.5 ml-auto">
