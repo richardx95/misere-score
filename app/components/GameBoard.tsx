@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import DealerIndicator from "./DealerIndicator";
 import ScoreTable from "./ScoreTable";
+import ScoreHistoryChart from "./ScoreHistoryChart";
 import { calculateRoundScores } from "../lib/scoring";
 import { saveGame } from "../lib/storage";
 import { useEffect } from "react";
@@ -164,6 +165,7 @@ const trickOptions =
       />
 
       <ScoreTable players={gameState.players} />
+      <ScoreHistoryChart players={gameState.players} rounds={gameState.rounds} />
 
       <div className="overflow-x-auto">
         <table className="min-w-full border text-white-900">
