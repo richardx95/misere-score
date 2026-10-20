@@ -48,7 +48,7 @@ export const MISERE_GAME_TYPES: GameType[] = [
   {
     id: "9_alleen",
     name: "9 alleen",
-    description: "Alleen. Doel 9 slagen. Bieder krijgt 3x 10 = 30p bij winst, -30p bij verlies",
+    description: "Alleen. 9 slagen = 10p per speler, 10-12 = 11p, 13 slagen = 15p. Verlies: -10p per speler",
     basePoints: 10,
     requiresPartner: false,
     isTrickBased: true,

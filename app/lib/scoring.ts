@@ -181,7 +181,13 @@ export function calculateRoundScores(
   const winners = success ? participants : activeIndices.filter((i) => !participants.includes(i));
   const losers = success ? activeIndices.filter((i) => !participants.includes(i)) : participants;
 
-  const perOpponent = base + (bonus || 0);
+  let perOpponent = base + (bonus || 0);
+  if (normalizedBid === "9 alleen" && success) {
+    const tricks = typeof tricksMade === "number"
+      ? tricksMade
+      : parseInt(String(tricksMade), 10) || 0;
+    perOpponent += tricks === 13 ? 5 : tricks >= 10 ? 1 : 0;
+  }
 
   for (const l of losers) {
     changes[l] -= perOpponent * winners.length;
