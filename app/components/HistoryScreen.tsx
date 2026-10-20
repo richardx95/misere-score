@@ -12,6 +12,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { ListFilter, TrendingUp, RotateCcw, AlertTriangle, ArrowLeft } from "lucide-react";
+import { PLAYER_COLORS } from "../lib/playerColors";
 
 interface HistoryScreenProps {
   players: Player[];
@@ -19,15 +20,6 @@ interface HistoryScreenProps {
   onUndoLastRound: () => void;
   onBack: () => void;
 }
-
-const PLAYER_COLORS = [
-  "#16a34a", // Emerald Green
-  "#2563eb", // Royal Blue
-  "#dc2626", // Crimson Red
-  "#9333ea", // Purple
-  "#ea580c", // Orange
-  "#0891b2", // Cyan
-];
 
 export default function HistoryScreen({
   players,
